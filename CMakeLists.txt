@@ -10,8 +10,6 @@ set(SENSEI_URL "https://gitlab.kitware.com/sensei/sensei"
 set(SENSEI_DEPS_URL "http://missmarple.lbl.gov/SENSEI/SENSEI_deps"
     CACHE STRING "URL to the dependency tarballs")
 
-set(LIBXLSXWRITER_URL http://github.com/burlen/libxlsxwriter.git)
-
 # The following versions of each library are installed by this script:
 set(MPICH_SOURCE mpich-3.3.1)
 set(OPENMPI_SOURCE openmpi-4.0.1)
@@ -570,9 +568,10 @@ if (ENABLE_VTK)
             "-DCMAKE_CXX_FLAGS_DEBUG=${CMAKE_CXX_FLAGS_DEBUG}"
             "-DCMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}"
             -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-            ${sensei_flags} ${MPI_FLAGS} -DSENSEI_HAS_VTK=OFF
+            ${sensei_flags} ${MPI_FLAGS}
             -DVTK_PYTHON_VERSION=3 -DVTK_WRAP_PYTHON=ON
-            -DVTK_Group_Rendering=OFF
+            -DVTK_Group_Rendering=OFF -DTK_Group_StandAlone=OFF
+        BUILD_COMMAND env ${env} make -j
         BUILD_IN_SOURCE 0 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
 else()
     message(STATUS "VTK .................... Disabled")
@@ -605,16 +604,22 @@ if (ENABLE_SENSEI)
             -DENABLE_VTK_FILTERS=ON -DENABLE_PYTHON=ON -DBUILD_TESTING=ON
             -DVTK_DIR=${CMAKE_INSTALL_PREFIX}/lib64/cmake/vtk-8.2/
             ${PROJECT_BINARY_DIR}/sensei
-        TEST_AFTER_INSTALL 0
-        TEST_COMMAND env ${env} ctest ${CTEST_FLAGS} || true
         LOG_DOWNLOAD 1 LOG_CONFIGURE 0 LOG_BUILD 0 LOG_INSTALL 0)
 
+        # optionally run regression tests
+        if (ENABLE_SENSEI_TEST)
+            ExternalProject_Add_Step(SENSEI sensei_config
+                WORKING_DIRECTORY <BINARY_DIR>
+                TEST_COMMAND env ${env} ctest ${CTEST_FLAGS} -D Experimental || true
+                DEPENDEES build)
+        endif()
+
+        # install sensei config
         ExternalProject_Add_Step(SENSEI sensei_config
             WORKING_DIRECTORY <SOURCE_DIR>/tools/sensei_config
             COMMAND env ${env} make_install ${CMAKE_INSTALL_PREFIX}
             DEPENDEES install
-            ALWAYS 1
-            )
+            ALWAYS 1)
 
 else()
     message(STATUS "SENSEI ................. Disabled")
