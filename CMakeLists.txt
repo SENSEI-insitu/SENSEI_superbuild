@@ -10,6 +10,15 @@ set(SENSEI_URL "https://gitlab.kitware.com/sensei/sensei"
 set(SENSEI_DEPS_URL "http://missmarple.lbl.gov/SENSEI/SENSEI_deps"
     CACHE STRING "URL to the dependency tarballs")
 
+set(SENSEI_BRANCH develop CACHE STRING
+    "branch/tag/sha to checkout from the SENSEI git repository")
+
+set(SENSEI_BACKEND "python" CACHE STRING
+    "The name of the back-end to build with")
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "python" "catalyst" "acsent" "libsim" "vtk" "vtkm")
+
+
 # The following versions of each library are installed by this script:
 set(MPICH_SOURCE mpich-3.3.1)
 set(OPENMPI_SOURCE openmpi-4.0.1)
@@ -33,22 +42,22 @@ set(KIWISOLVER_SOURCE kiwisolver-1.1.0)
 set(MATPLOTLIB_SOURCE matplotlib-3.1.1)
 set(VTK_SOURCE VTK-8.2.0)
 
-set(SENSEI_SOURCE 9baf2c85f1 CACHE STRING
-    "branch to checkout from the SENSEI git repository")
-
-# enable/disable each piece, all on by default
-option(ENABLE_MPICH "builds and installs MPICH MPI" ON)
-option(ENABLE_OPENMPI "builds and installs OpenMPI MPI" OFF)
-option(ENABLE_CRAY_MPICH "Auto detect MPICH configuration for Cray systems" OFF)
-option(WITHOUT_MPI "Disable all dependence on MPI" OFF)
-option(ENABLE_PYTHON "builds and installs Python group" ON)
-option(ENABLE_READLINE "builds and installs readline" OFF)
-option(ENABLE_MATPLOTLIB "builds and installs matplotlib group" ON)
-option(ENABLE_SENSEI "builds and installs SENSEI" ON)
-option(ENABLE_SENSEI_TEST "runs the SENSEI regression tests" OFF)
-option(ENABLE_OPENSSL "builds and installs OpenSSL" OFF)
-option(ENABLE_VTK "builds and installs VTK" ON)
-option(ENABLE_MEMCHECK "configures for use with valgrind" OFF)
+if (SENSEI_BACKEND STREQUAL python)
+    option(ENABLE_MPICH "builds and installs MPICH MPI" ON)
+    option(ENABLE_OPENMPI "builds and installs OpenMPI MPI" OFF)
+    option(ENABLE_CRAY_MPICH "Auto detect MPICH configuration for Cray systems" OFF)
+    option(WITHOUT_MPI "Disable all dependence on MPI" OFF)
+    option(ENABLE_PYTHON "builds and installs Python group" ON)
+    option(ENABLE_READLINE "builds and installs readline" OFF)
+    option(ENABLE_MATPLOTLIB "builds and installs matplotlib group" ON)
+    option(ENABLE_SENSEI "builds and installs SENSEI" ON)
+    option(ENABLE_SENSEI_TEST "runs the SENSEI regression tests" OFF)
+    option(ENABLE_OPENSSL "builds and installs OpenSSL" OFF)
+    option(ENABLE_VTK "builds and installs VTK" ON)
+    option(ENABLE_MEMCHECK "configures for use with valgrind" OFF)
+else()
+    message(FATAL_ERROR "Invalid SENSEI_BACKEND ${SENSEI_BACKEND}")
+endif()
 
 # the list of enabled dependencies
 set(sensei_deps)
@@ -59,7 +68,8 @@ message(STATUS "C++ compiler is ${CMAKE_CXX_COMPILER} (${CMAKE_CXX_COMPILER_ID})
 
 # We need to override the default value of CMAKE_INSTALL_PREFIX.
 if (CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
-  set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR} CACHE PATH "" FORCE)
+  set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/../sensei-${SENSEI_BRANCH}-${SENSEI_BACKEND}
+     CACHE PATH "" FORCE)
 endif()
 message(STATUS "Installing libraries in ${CMAKE_INSTALL_PREFIX}")
 
@@ -594,7 +604,7 @@ if (ENABLE_SENSEI)
         DEPENDS ${sensei_deps}
         DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
         GIT_REPOSITORY ${SENSEI_URL}
-        GIT_TAG ${SENSEI_SOURCE}
+        GIT_TAG ${SENSEI_BRANCH}
         UPDATE_COMMAND ${SENSEI_UPDATE}
         CMAKE_COMMAND env ${env} ${CMAKE_COMMAND}
             -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
