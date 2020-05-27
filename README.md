@@ -56,7 +56,9 @@ git clone https://github.com/SENSEI-insitu/SENSEI_superbuild.git
 cd SENSEI_superbuild
 mkdir build && cd build
 
-cmake -DENABLE_READLINE=ON -DENABLE_MPICH=OFF -DENABLE_CRAY_MPICH=ON ../
+cmake -DENABLE_MPICH=OFF -DENABLE_CRAY_MPICH=ON \
+    -DSENSEI_BRANCH=develop -DSENSEI_BACKEND=python \
+    ..
 
 make -j32
 make -j32 install
