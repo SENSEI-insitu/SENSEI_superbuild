@@ -196,6 +196,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/sensei_env.sh.in
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sensei_env.sh
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
+# configure the environment module that will let us reproduce
+# the build enviornment at run-time
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modulefiles/${SENSEI_BACKEND}.in
+    ${CMAKE_CURRENT_BINARY_DIR}/modulefiles/${SENSEI_BRANCH}_${SENSEI_BACKEND} @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/modulefiles/${SENSEI_BRANCH}_${SENSEI_BACKEND}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/modulefiles/sensei)
+
 # Build MPICH if MPI is requested.
 if (NOT WITHOUT_MPI AND ENABLE_CRAY_MPICH)
     message(STATUS "MPICH .................. Disabled")
