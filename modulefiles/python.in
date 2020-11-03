@@ -1,5 +1,6 @@
 #%Module 1.0
-prereq PrgEnv-gnu
+
+#prereq PrgEnv-gnu
 
 prepend-path PATH @CMAKE_INSTALL_PREFIX@/bin/
 
