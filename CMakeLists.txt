@@ -18,6 +18,8 @@ set(SENSEI_BACKEND "python" CACHE STRING
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
     "python" "catalyst" "acsent" "libsim" "vtk" "vtkm")
 
+set(LOG_OUTPUT 0 CACHE STRING "Enables build output")
+
 
 # The following versions of each library are installed by this script:
 set(MPICH_SOURCE mpich-3.3.1)
@@ -250,7 +252,8 @@ elseif (NOT WITHOUT_MPI AND ENABLE_MPICH)
         SOURCE_DIR ${PROJECT_BINARY_DIR}/${MPICH_SOURCE}
         CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${MPICH_SOURCE}/configure
             --prefix=${CMAKE_INSTALL_PREFIX} --disable-maintainer-mode --enable-threads=multiple
-        BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+        BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 elseif (NOT WITHOUT_MPI AND ENABLE_OPENMPI)
     message(STATUS "MPICH .................. Disabled")
     message(STATUS "Cray MPICH ............. Disabled")
@@ -263,7 +266,8 @@ elseif (NOT WITHOUT_MPI AND ENABLE_OPENMPI)
         SOURCE_DIR ${PROJECT_BINARY_DIR}/${OPENMPI_SOURCE}
         CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${OPENMPI_SOURCE}/configure
             --prefix=${CMAKE_INSTALL_PREFIX} --enable-mpi-thread-multiple
-        BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+        BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 else()
     message(STATUS "MPICH .................. Disabled")
     message(STATUS "Cray MPICH ............. Disabled")
@@ -281,7 +285,8 @@ if (ENABLE_PYTHON OR ENABLE_NETCDF OR ENABLE_LIBXLSXWRITER OR ENABLE_OPENSSL)
         CONFIGURE_COMMAND env ${env}
              ${PROJECT_BINARY_DIR}/${ZLIB_SOURCE}/configure
             --prefix=${CMAKE_INSTALL_PREFIX} --enable-shared
-        BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+        BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 else()
     message(STATUS "zlib ................... Disabled")
 endif()
@@ -299,7 +304,8 @@ if (ENABLE_OPENSSL)
         CONFIGURE_COMMAND env ${env}
              ${PROJECT_BINARY_DIR}/${OPENSSL_SOURCE}/config
             enable-ssl3 enable-ssl3-method --prefix=${CMAKE_INSTALL_PREFIX} ${c_flags}
-        BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+        BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 else()
     message(STATUS "OpenSSL ................ Disabled")
 endif()
@@ -315,7 +321,8 @@ if (ENABLE_PYTHON)
         SOURCE_DIR ${PROJECT_BINARY_DIR}/${NCURSES_SOURCE}
         CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${NCURSES_SOURCE}/configure
             --prefix=${CMAKE_INSTALL_PREFIX}
-        BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+        BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 
     # readline
     if (ENABLE_READLINE)
@@ -328,7 +335,8 @@ if (ENABLE_PYTHON)
             SOURCE_DIR ${PROJECT_BINARY_DIR}/${READLINE_SOURCE}
             CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${READLINE_SOURCE}/configure
                 --prefix=${CMAKE_INSTALL_PREFIX}
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+            BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+            LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
     else()
         message(STATUS "readline ............... Disabled")
     endif()
@@ -343,7 +351,8 @@ if (ENABLE_PYTHON)
         SOURCE_DIR ${PROJECT_BINARY_DIR}/${PYTHON_SOURCE}
         CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${PYTHON_SOURCE}/configure
             --enable-shared --with-ensurepip=yes --prefix=${CMAKE_INSTALL_PREFIX}
-        LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+        LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 
     # Build Swig.
     message(STATUS "SWIG ................... Enabled")
@@ -355,7 +364,8 @@ if (ENABLE_PYTHON)
         SOURCE_DIR ${PROJECT_BINARY_DIR}/${SWIG_SOURCE}
         CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${SWIG_SOURCE}/configure
             --with-python=${CMAKE_INSTALL_PREFIX}/bin/python3 --prefix=${CMAKE_INSTALL_PREFIX}
-        LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+        LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 
     # Build Cython.
     message(STATUS "Cython ................. Enabled")
@@ -368,7 +378,8 @@ if (ENABLE_PYTHON)
         BUILD_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/python3
             setup.py build install --prefix=${CMAKE_INSTALL_PREFIX}
         INSTALL_COMMAND ""
-        BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_BUILD 1)
+        BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT})
 
     # Build numpy.
     message(STATUS "NumPy .................. Enabled")
@@ -383,7 +394,8 @@ if (ENABLE_PYTHON)
            ${CMAKE_INSTALL_PREFIX}/bin/python3 setup.py build install
            "--prefix=${CMAKE_INSTALL_PREFIX}"
         INSTALL_COMMAND ""
-        BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_BUILD 1)
+        BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT})
 
     # Build mpi4py if MPI was requested.
     set(tmp "MPICH")
@@ -421,7 +433,8 @@ if (ENABLE_PYTHON)
             INSTALL_COMMAND env ${env}
                 ${CMAKE_INSTALL_PREFIX}/bin/python3 setup.py
             install --prefix=${CMAKE_INSTALL_PREFIX}
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_BUILD 1 LOG_INSTALL 1)
+            BUILD_IN_SOURCE 1 LOG_DOWNLOAD ${LOG_OUTPUT}
+            LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
     else()
         message(STATUS "mpi4py ................. Disabled")
     endif()
@@ -437,7 +450,7 @@ if (ENABLE_PYTHON)
             CONFIGURE_COMMAND ""
             BUILD_COMMAND env ${env} python3 -m pip install matplotlib
             INSTALL_COMMAND ""
-            LOG_BUILD 1)
+            LOG_BUILD ${LOG_OUTPUT})
     else()
         message(STATUS "matplotlib ............. Disabled")
     endif()
@@ -482,7 +495,8 @@ if (ENABLE_VTK)
             -DVTK_PYTHON_VERSION=3 -DVTK_WRAP_PYTHON=ON
             -DVTK_Group_Rendering=OFF -DTK_Group_StandAlone=OFF
         BUILD_COMMAND env ${env} make -j
-        BUILD_IN_SOURCE 0 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
+        BUILD_IN_SOURCE 0 LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 else()
     message(STATUS "VTK .................... Disabled")
 endif()
@@ -514,7 +528,8 @@ if (ENABLE_SENSEI)
             -DENABLE_VTK_FILTERS=ON -DENABLE_PYTHON=ON -DBUILD_TESTING=ON
             -DVTK_DIR=${CMAKE_INSTALL_PREFIX}/lib64/cmake/vtk-8.2/
             ${PROJECT_BINARY_DIR}/sensei
-        LOG_DOWNLOAD 1 LOG_CONFIGURE 0 LOG_BUILD 0 LOG_INSTALL 0)
+        LOG_DOWNLOAD ${LOG_OUTPUT} LOG_CONFIGURE ${LOG_OUTPUT}
+        LOG_BUILD ${LOG_OUTPUT} LOG_INSTALL ${LOG_OUTPUT})
 
         # optionally run regression tests
         if (ENABLE_SENSEI_TEST)
