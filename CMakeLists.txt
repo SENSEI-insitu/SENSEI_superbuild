@@ -427,136 +427,18 @@ if (ENABLE_PYTHON)
     endif()
 
     if (ENABLE_MATPLOTLIB)
-        find_program(PKG_CONFIG pkg-config DOC "pkg-config program")
-        if (NOT PKG_CONFIG)
-            message(FATAL_ERROR "pkg-config is required to build matplotlib")
-        endif()
-
-        # libpng
-        set(system_libpng OFF)
-        if (APPLE)
-            # see issue #20
-            find_library(have_system_libpng libpng.dylib)
-            if (have_system_libpng)
-                set(system_libpng ON)
-                message(STATUS "libpng ................. System")
-            endif()
-        endif()
-        if (NOT system_libpng)
-            message(STATUS "libpng ................. Enabled")
-            ExternalProject_Add(libpng
-                DEPENDS zlib
-                DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-                URL ${SENSEI_DEPS_URL}/${LIBPNG_SOURCE}.tar.gz
-                SOURCE_DIR ${PROJECT_BINARY_DIR}/${LIBPNG_SOURCE}
-                CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${LIBPNG_SOURCE}/configure
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-                BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
-        endif()
-
-        # freetype
-        message(STATUS "freetype ............... Enabled")
-        ExternalProject_Add(freetype
-            DEPENDS zlib
-            DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-            URL ${SENSEI_DEPS_URL}/${FREETYPE_SOURCE}.tar.gz
-            SOURCE_DIR ${PROJECT_BINARY_DIR}/${FREETYPE_SOURCE}
-            CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${FREETYPE_SOURCE}/configure
-                --prefix=${CMAKE_INSTALL_PREFIX}
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
-
-        # python_dateutil
-        message(STATUS "python_dateutil ........ Enabled")
-        ExternalProject_Add(python_dateutil
-            DEPENDS setuptools
-            DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-            URL ${SENSEI_DEPS_URL}/${PYTHON_DATEUTIL_SOURCE}.tar.gz
-            SOURCE_DIR ${PROJECT_BINARY_DIR}/${PYTHON_DATEUTIL_SOURCE}
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/python3
-                setup.py build install "--prefix=${CMAKE_INSTALL_PREFIX}"
-            INSTALL_COMMAND ""
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
-
-        # pyparsing
-        message(STATUS "pyparsing .............. Enabled")
-        ExternalProject_Add(pyparsing
-            DEPENDS setuptools
-            DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-            URL ${SENSEI_DEPS_URL}/${PYPARSING_SOURCE}.tar.gz
-            SOURCE_DIR ${PROJECT_BINARY_DIR}/${PYPARSING_SOURCE}
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/python3
-                setup.py build install "--prefix=${CMAKE_INSTALL_PREFIX}"
-            INSTALL_COMMAND ""
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
-
-        # cycler
-        message(STATUS "cycler ................. Enabled")
-        ExternalProject_Add(cycler
-            DEPENDS setuptools
-            DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-            URL ${SENSEI_DEPS_URL}/${CYCLER_SOURCE}.tar.gz
-            SOURCE_DIR ${PROJECT_BINARY_DIR}/${CYCLER_SOURCE}
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/python3
-                setup.py build install "--prefix=${CMAKE_INSTALL_PREFIX}"
-            INSTALL_COMMAND ""
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
-
-        # pytz
-        message(STATUS "pytz ................... Enabled")
-        ExternalProject_Add(pytz
-            DEPENDS setuptools
-            DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-            URL ${SENSEI_DEPS_URL}/${PYTZ_SOURCE}.tar.gz
-            SOURCE_DIR ${PROJECT_BINARY_DIR}/${PYTZ_SOURCE}
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/python3
-                setup.py build install "--prefix=${CMAKE_INSTALL_PREFIX}"
-            INSTALL_COMMAND ""
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
-
-        # kiwisolver
-        message(STATUS "kiwisolver ............. Enabled")
-        ExternalProject_Add(kiwisolver
-            DEPENDS setuptools
-            DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-            URL ${SENSEI_DEPS_URL}/${KIWISOLVER_SOURCE}.tar.gz
-            SOURCE_DIR ${PROJECT_BINARY_DIR}/${KIWISOLVER_SOURCE}
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/python3
-                setup.py build install "--prefix=${CMAKE_INSTALL_PREFIX}"
-            INSTALL_COMMAND ""
-            INSTALL_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/pip3 install kiwisolver
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
-
-        # Build matplotlib
         message(STATUS "matplotlib ............. Enabled")
         list(APPEND sensei_deps matplotlib)
-        set(matplotlib_deps setuptools numpy freetype pyparsing
-            python_dateutil cycler pytz kiwisolver)
-        if (NOT system_libpng)
-            list(APPEND matplotlib_deps libpng)
-        endif()
         ExternalProject_Add(matplotlib
-            DEPENDS Python ${matplotlib_deps}
-            DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-            URL ${SENSEI_DEPS_URL}/${MATPLOTLIB_SOURCE}.tar.gz
-            SOURCE_DIR ${PROJECT_BINARY_DIR}/${MATPLOTLIB_SOURCE}
+            DEPENDS numpy
+            URL ""
+            DOWNLOAD_COMMAND ""
+            SOURCE_DIR ${PROJECT_BINARY_DIR}
             CONFIGURE_COMMAND ""
-            BUILD_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/python3
-                setup.py build install "--prefix=${CMAKE_INSTALL_PREFIX}"
+            BUILD_COMMAND env ${env} python3 -m pip install matplotlib
             INSTALL_COMMAND ""
-            BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_BUILD 1)
+            LOG_BUILD 1)
     else()
-        message(STATUS "libpng ................. Disabled")
-        message(STATUS "freetype ............... Disabled")
-        message(STATUS "python_dateutil ........ Disabled")
-        message(STATUS "pyparsing .............. Disabled")
-        message(STATUS "cycler ................. Disabled")
-        message(STATUS "pytz ................... Disabled")
-        message(STATUS "kiwisolver ............. Disabled")
         message(STATUS "matplotlib ............. Disabled")
     endif()
 else()
