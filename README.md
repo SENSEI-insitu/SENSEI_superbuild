@@ -56,8 +56,11 @@ git clone https://github.com/SENSEI-insitu/SENSEI_superbuild.git
 cd SENSEI_superbuild
 mkdir build && cd build
 
-cmake -DENABLE_MPICH=OFF -DENABLE_CRAY_MPICH=ON \
-    -DSENSEI_BRANCH=develop -DSENSEI_BACKEND=python \
+cmake \
+    -DENABLE_MPICH=OFF \
+    -DENABLE_CRAY_MPICH=ON \
+    -DSENSEI_BRANCH=develop \
+    -DSENSEI_BACKEND=python \
     ..
 
 make -j32
@@ -65,4 +68,30 @@ make -j32 install
 ```
 See `Overview` section above for notes on how to use the install..
 
+### NERSC Cori GPU Nodes
+#### Python backend
+```
+module purge
+module load cgpu
+module load gcc cuda openmpi cmake
 
+salloc -C gpu -N 1 -t 120 -c 10 -G 1
+
+git clone https://github.com/SENSEI-insitu/SENSEI_superbuild.git
+
+cd SENSEI_superbuild
+mkdir build && cd build
+
+cmake \
+    -DCMAKE_C_COMPILER=`which gcc` \
+    -DCMAKE_CXX_COMPILER=`which g++` \
+    -DENABLE_MPICH=OFF \
+    -DENABLE_CORI_GPU=ON \
+    -DSENSEI_BRANCH=develop \
+    -DSENSEI_BACKEND=python \
+    ..
+
+make -j10
+make -j10 install
+```
+See `Overview` section above for notes on how to use the install..

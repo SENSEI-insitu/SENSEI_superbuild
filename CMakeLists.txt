@@ -46,6 +46,7 @@ if (SENSEI_BACKEND STREQUAL python)
     option(ENABLE_MPICH "builds and installs MPICH MPI" ON)
     option(ENABLE_OPENMPI "builds and installs OpenMPI MPI" OFF)
     option(ENABLE_CRAY_MPICH "Auto detect MPICH configuration for Cray systems" OFF)
+    option(ENABLE_CORI_GPU "Auto detect OpenMPI configuration for Cori GPU nodes" OFF)
     option(WITHOUT_MPI "Disable all dependence on MPI" OFF)
     option(ENABLE_PYTHON "builds and installs Python group" ON)
     option(ENABLE_READLINE "builds and installs readline" OFF)
@@ -166,6 +167,15 @@ if (NOT WITHOUT_MPI AND NOT ENABLE_MPICH AND NOT ENABLE_OPENMPI)
         set(MPI_C_LIBRARIES ${CRAY_MPICH_LDFLAGS} CACHE STRING "MPI link dependencies")
         set(MPIEXEC srun CACHE STRING "Platform MPI run equivalent")
         set(MPI_C_FOUND CACHE BOOL ON "status of MPI config")
+    elseif (ENABLE_CORI_GPU)
+        # use pkg-config to detect MPI dependencies
+        set(ENV{PKG_CONFIG_PATH} "$ENV{OPENMPI_DIR}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+        find_package(PkgConfig QUIET)
+        pkg_check_modules(CORI_GPU REQUIRED QUIET ompi)
+        set(MPI_C_INCLUDE_PATH ${CORI_GPU_INCLUDE_DIRS} CACHE STRING "MPI include directories")
+        set(MPI_C_LIBRARIES ${CORI_GPU_LDFLAGS} CACHE STRING "MPI link dependencies")
+        set(MPIEXEC srun CACHE STRING "Platform MPI run equivalent")
+        set(MPI_C_FOUND CACHE BOOL ON "status of MPI config")
     endif()
     list(APPEND mpi_flags "-DMPI_CXX_COMPILER=${MPI_CXX_COMPILER}")
     list(APPEND mpi_flags "-DMPI_C_COMPILER=${MPI_C_COMPILER}")
@@ -217,12 +227,21 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/modulefiles/${SENSEI_BRANCH}_${SENSEI_
 if (NOT WITHOUT_MPI AND ENABLE_CRAY_MPICH)
     message(STATUS "MPICH .................. Disabled")
     message(STATUS "Cray MPICH ............. Enabled")
+    message(STATUS "Cori GPU ............... Disabled")
     message(STATUS "OpenMPI ................ Disabled")
     list(APPEND sensei_flags "-DENABLE_CRAY_MPICH=ON")
+    list(APPEND sensei_flags "-DREQUIRE_MPI=TRUE")
+elseif (NOT WITHOUT_MPI AND ENABLE_CORI_GPU)
+    message(STATUS "MPICH .................. Disabled")
+    message(STATUS "Cray MPICH ............. Disabled")
+    message(STATUS "Cori GPU ............... Enabled")
+    message(STATUS "OpenMPI ................ Disabled")
+    list(APPEND sensei_flags "-DENABLE_CORI_GPU=ON")
     list(APPEND sensei_flags "-DREQUIRE_MPI=TRUE")
 elseif (NOT WITHOUT_MPI AND ENABLE_MPICH)
     message(STATUS "MPICH .................. Enabled")
     message(STATUS "Cray MPICH ............. Disabled")
+    message(STATUS "Cori GPU ............... Disabled")
     message(STATUS "OpenMPI ................ Disabled")
     list(APPEND sensei_flags "-DREQUIRE_MPI=TRUE")
     ExternalProject_Add(mpi
@@ -235,6 +254,7 @@ elseif (NOT WITHOUT_MPI AND ENABLE_MPICH)
 elseif (NOT WITHOUT_MPI AND ENABLE_OPENMPI)
     message(STATUS "MPICH .................. Disabled")
     message(STATUS "Cray MPICH ............. Disabled")
+    message(STATUS "Cori GPU ............... Disabled")
     message(STATUS "OpenMPI ................ Enabled")
     list(APPEND sensei_flags "-DREQUIRE_MPI=TRUE")
     ExternalProject_Add(mpi
@@ -247,6 +267,7 @@ elseif (NOT WITHOUT_MPI AND ENABLE_OPENMPI)
 else()
     message(STATUS "MPICH .................. Disabled")
     message(STATUS "Cray MPICH ............. Disabled")
+    message(STATUS "Cori GPU ............... Disabled")
     message(STATUS "OpenMPI ................ Disabled")
 endif()
 
@@ -321,21 +342,8 @@ if (ENABLE_PYTHON)
         URL ${SENSEI_DEPS_URL}/${PYTHON_SOURCE}.tgz
         SOURCE_DIR ${PROJECT_BINARY_DIR}/${PYTHON_SOURCE}
         CONFIGURE_COMMAND env ${env} ${PROJECT_BINARY_DIR}/${PYTHON_SOURCE}/configure
-            --enable-shared --prefix=${CMAKE_INSTALL_PREFIX}
+            --enable-shared --with-ensurepip=yes --prefix=${CMAKE_INSTALL_PREFIX}
         LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1)
-
-    # Build setuptools
-    message(STATUS "setuptools ............. Enabled")
-    ExternalProject_Add(setuptools
-        DEPENDS Python
-        DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
-        URL ${SENSEI_DEPS_URL}/${SETUPTOOLS_SOURCE}.zip
-        SOURCE_DIR ${PROJECT_BINARY_DIR}/${SETUPTOOLS_SOURCE}
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND env ${env} ${CMAKE_INSTALL_PREFIX}/bin/python3
-            setup.py build install "--prefix=${CMAKE_INSTALL_PREFIX}"
-        INSTALL_COMMAND ""
-        BUILD_IN_SOURCE 1 LOG_DOWNLOAD 1 LOG_BUILD 1)
 
     # Build Swig.
     message(STATUS "SWIG ................... Enabled")
@@ -352,7 +360,7 @@ if (ENABLE_PYTHON)
     # Build Cython.
     message(STATUS "Cython ................. Enabled")
     ExternalProject_Add(Cython
-        DEPENDS setuptools
+        DEPENDS Python
         DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
         URL ${SENSEI_DEPS_URL}/${CYTHON_SOURCE}.tar.gz
         SOURCE_DIR ${PROJECT_BINARY_DIR}/${CYTHON_SOURCE}
@@ -366,7 +374,7 @@ if (ENABLE_PYTHON)
     message(STATUS "NumPy .................. Enabled")
     list(APPEND sensei_deps numpy)
     ExternalProject_Add(numpy
-        DEPENDS Cython setuptools
+        DEPENDS Cython
         DOWNLOAD_DIR ${PROJECT_BINARY_DIR}
         URL ${SENSEI_DEPS_URL}/${NUMPY_SOURCE}.tar.gz
         SOURCE_DIR ${PROJECT_BINARY_DIR}/${NUMPY_SOURCE}
@@ -386,7 +394,7 @@ if (ENABLE_PYTHON)
         "Select the mpi4py configuration we use.")
 
     if (NOT WITHOUT_MPI)
-        set(mpi4py_deps setuptools numpy)
+        set(mpi4py_deps numpy)
         if (ENABLE_MPICH OR ENABLE_OPENMPI)
             list(APPEND mpi4py_deps mpi)
         endif()
@@ -394,6 +402,9 @@ if (ENABLE_PYTHON)
             # set variables needed by mpi4py
             string(REPLACE ";" " " MPI4PY_LDFLAGS "${CRAY_MPICH_LDFLAGS}")
             string(REPLACE ";" " " MPI4PY_CFLAGS "${CRAY_MPICH_CFLAGS}")
+        elseif(ENABLE_CORI_GPU)
+            string(REPLACE ";" " " MPI4PY_LDFLAGS "${CORI_GPU_LDFLAGS}")
+            string(REPLACE ";" " " MPI4PY_CFLAGS "${CORI_GPU_CFLAGS}")
         endif()
         configure_file(mpi4py.cfg.in mpi4py.cfg)
         message(STATUS "mpi4py ................. Enabled")
